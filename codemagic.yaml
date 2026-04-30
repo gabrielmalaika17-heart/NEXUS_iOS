@@ -1,0 +1,45 @@
+workflows:
+  ios-nexus:
+    name: NEXUS iOS Build
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+
+    environment:
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.yourname.nexus
+      vars:
+        XCODE_PROJECT: "NEXUS.xcodeproj"
+        XCODE_SCHEME: "NEXUS"
+        BUNDLE_ID: "com.yourname.nexus"
+      xcode: latest
+
+    scripts:
+      - name: Set API Key in Info.plist
+        script: |
+          plutil -replace ANTHROPIC_API_KEY \
+            -string "$ANTHROPIC_API_KEY" \
+            NEXUS/Info.plist
+
+      - name: Build iOS app
+        script: |
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - ton.email@example.com
+        notify:
+          success: true
+          failure: true
